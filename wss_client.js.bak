@@ -1,0 +1,139 @@
+var WebSocket = require('ws');
+var wssRouter = require('./wssrouter');
+var crypto = require('crypto')
+var fs = require('fs');
+
+var ws = null;
+var pingTimerCnt=0;
+var wssOption = {
+	protocolVersion: 8
+};
+var wssClientInfo = JSON.parse(fs.readFileSync('./config/device.config').toString());
+
+//shasum.update(wssClientInfo.cuid + wssClientInfo.cKey)
+//var sha1sum=shasum.digest('base64')
+//console.log(sha1sum)
+
+//deviceServ, or deviceReg
+function websocketClient(server_url, ws_protocol) {
+	ws = new WebSocket(server_url, 'deviceServ', wssOption);
+	ws.on('error', function error(err) {
+		console.log(err);
+	});
+				
+	ws.on('ping', function ping(data) {
+		console.log("get ping") ;
+		pingTimerCnt=0;
+	});
+					
+	ws.on('open', function open() {
+		console.log('connected');
+		pingTimerCnt=0;
+//		ws.send(Date.now().toString(), {mask: true});
+	});
+					
+	ws.on('close', function close() {
+		console.log('disconnected');
+		pingTimerCnt = 0;
+		ws = null;
+	});
+				
+	ws.on('message', function message(data, flags) {
+		console.log(data);
+		wssRouter.route_command(data, commandSuccess, commandFailure);
+	});
+
+
+        function commandSuccess(req, result) {
+		var resp = {
+			jsonrpc: req['jsonrpc'],
+			id: req['id'],
+			result: result,
+		}
+
+		if (ws) {
+			var json_resp=JSON.stringify(resp);	
+			console.log('success: ' + json_resp);
+			ws.send(json_resp, {mask: true});
+		}
+		else {
+		}
+        }
+        
+        function commandFailure(req, err) {
+		console.log('failure: ' + err);
+		console.log('failure: ' + JSON.stringify(req));
+        }
+}
+
+setInterval( function() {
+	if (!wssClientInfo.cuid && !wssClientInfo.cKey && wssClientInfo.sn) {
+		var mac='';
+		var shasum = crypto.createHash('sha1');
+		shasum.update(mac + wssClientInfo.mac);
+		var sha1sum=shasum.digest('base64');
+		console.log(sha1sum);
+		wssClientInfo.hv = sha1sum;
+		encodeURIComponent(sha1sum);
+	}
+	if (wssClientInfo.cuid && wssClientInfo.hv  && wssClientInfo.cKey) {
+		var server_url = wssClientInfo.server_url 
+			+ "?cuid=" + wssClientInfo.cuid 
+			+ "&hv=" + wssClientInfo.hv 
+			+ "&model=" + wssClientInfo.model 
+			+ "&version=" + wssClientInfo.version;
+		if (ws === null) {
+			console.log("ws is null");
+			websocketClient(server_url, 'deviceServ' );
+		}
+		else {
+			console.log("ws not null, readyState:" + ws.readyState);
+			if (ws.readyState==WebSocket.OPEN) {
+				pingTimerCnt ++;
+				console.log("pingTimercnt:" + pingTimerCnt);
+				if (pingTimerCnt >= 8) {
+					ws.close(1001, "ping time out");
+				}
+			}
+		}
+	}
+
+	//console.log(process.memoryUsage());
+}, 2000);
+
+
+
+setInterval( function() {
+	if (wssClientInfo.cuid && wssClientInfo.cKey && !wssClientInfo.hv) {
+		var shasum = crypto.createHash('sha1');
+		shasum.update(wssClientInfo.cuid + wssClientInfo.cKey);
+		var sha1sum=shasum.digest('base64');
+		console.log(sha1sum);
+		wssClientInfo.hv = sha1sum;
+		encodeURIComponent(sha1sum);
+	}
+	if (wssClientInfo.cuid && wssClientInfo.hv  && wssClientInfo.cKey) {
+		var server_url = wssClientInfo.server_url 
+			+ "?cuid=" + wssClientInfo.cuid 
+			+ "&hv=" + wssClientInfo.hv 
+			+ "&model=" + wssClientInfo.model 
+			+ "&version=" + wssClientInfo.version;
+		if (ws === null) {
+			console.log("ws is null");
+			websocketClient(server_url, 'deviceServ' );
+		}
+		else {
+			console.log("ws not null, readyState:" + ws.readyState);
+			if (ws.readyState==WebSocket.OPEN) {
+				pingTimerCnt ++;
+				console.log("pingTimercnt:" + pingTimerCnt);
+				if (pingTimerCnt >= 8) {
+					ws.close(1001, "ping time out");
+				}
+			}
+		}
+	}
+
+	//console.log(process.memoryUsage());
+}, 2000);
+

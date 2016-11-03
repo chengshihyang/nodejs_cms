@@ -1,7 +1,9 @@
 
-var router = {
+var router = { 
 	get : require('./command/get.js'),
-	post : require('./command/post.js')
+	post : require('./command/post.js'),
+	bind : require('./command/bind.js'),
+	register : require('./command/register.js'),
 }
 
 
@@ -13,7 +15,7 @@ function route_command(req, success, failure) {
 			var cmd_handler = router[parsed["method"].toLowerCase() ];
 			if (cmd_handler) {
 				if (typeof cmd_handler.resolve ==='function') {
-					cmd_handler.resolve(req, success, failure);
+					cmd_handler.resolve(parsed, success, failure);
 				}
 			}
 			else {
@@ -27,17 +29,4 @@ function route_command(req, success, failure) {
 	}
 }
 
-
-//example
-function success_callback() {
-	console.log("success callback");
-}
-
-function failure_callback() {
-	console.log("failure callback");
-}
-
-var req='{"jsonrpc":"2.0","method":"GET","params":{"uri":"/v3/device/system/version"},"id":1285433}'
-//var req='{"jsonrpc":"2.0","method":"BIND","params":{"uri":"/v3/device/system/version"},"id":1285433}'
-route_command(req, success_callback, failure_callback);
-
+module.exports.route_command = route_command;

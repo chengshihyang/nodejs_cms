@@ -1,1 +1,3 @@
-nodejs_cms
+xml2js
+async
+q

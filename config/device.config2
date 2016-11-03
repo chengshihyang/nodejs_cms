@@ -1,0 +1,9 @@
+{
+"model": "mt7620InodeOne",
+"version": "1.04",
+"macif": "en0",
+"sn": "ff01150303803192",
+"server_url": "wss://mediator.iiot.io:443/ca/",
+"cKey": "ac0a4bce9f0e9445636044da78d4b5e07136c608",
+"cuid": "a70794b0-9cbe-11e6-a520-f1d58afd6a81"
+}

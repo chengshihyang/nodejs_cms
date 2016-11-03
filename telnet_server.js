@@ -11,10 +11,10 @@ telnet.createServer(function (client) {
 	});
 	client.on('data', function (b) {
 		//client.write(b);
-		console.log(b);
-		if (b.readUInt8(0) === 3) {
-			client.end();
-		}
+		//console.log(b);
+		//if (b.readUInt8(0) === 3) {
+		//	client.end();
+		//}
 	});
 	client.write('\n Connected to Telnet server!\n');
 }).listen(23)
